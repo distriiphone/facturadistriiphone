@@ -579,7 +579,6 @@ table.inv-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
     <div class="stage-inner" id="stageInner">
       <div id="invoiceWrap">
         <div id="invoice" class="invoice"></div>
-        <div id="anexo" class="invoice inv-anexo" hidden></div>
       </div>
     </div>
   </section>
@@ -903,14 +902,19 @@ const LOGO_SRC = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAaQAAAGkCAIAAADx
   }
 
   function renderAnexo(numero, cliNombre) {
-    const el = $('anexo');
+    let el = $('anexo');
     if (!compData) {
-      el.hidden = true;
-      el.innerHTML = '';
+      // Sin comprobante: la hoja se elimina por completo del documento
+      if (el) el.remove();
       return;
     }
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'anexo';
+      el.className = 'invoice inv-anexo';
+      $('invoiceWrap').appendChild(el);
+    }
     const ref = val('compRef');
-    el.hidden = false;
     el.innerHTML = `
       <div class="inv-head">
         <img src="${LOGO_SRC}" alt="Distri iPhone S.A.S.">
@@ -1106,7 +1110,7 @@ const LOGO_SRC = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAaQAAAGkCAIAAADx
         image: { type: 'jpeg', quality: 0.95 },
         html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0 },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'], before: '.inv-anexo', avoid: ['tr', '.inv-firmas', '.inv-pago'] }
+        pagebreak: { mode: ['css', 'legacy'], before: compData ? '.inv-anexo' : [], avoid: ['tr', '.inv-firmas', '.inv-pago'] }
       }).from(wrap).outputPdf('blob');
       return { blob, nombre };
     } finally {
